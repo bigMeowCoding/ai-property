@@ -1,0 +1,4 @@
+interface:
+  display_name: "Codex Troubleshooter"
+  short_description: "Diagnose Codex startup and reconnect issues."
+  default_prompt: "Use $codex-troubleshooter to diagnose this Codex issue and apply the safest local fix."
