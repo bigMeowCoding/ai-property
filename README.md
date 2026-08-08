@@ -12,11 +12,13 @@
 
 当前资产：
 
+- [`code-craft-and-refactoring`](skills/code-craft-and-refactoring/)：以证据驱动编码、重构、评审、性能与安全优化，并与前端架构工作双向路由。
 - [`codex-troubleshooter`](skills/codex-troubleshooter/)：诊断并修复 Codex Desktop、CLI、Skill、Plugin、MCP、网络与配置问题。
+- [`frontend-architect`](skills/frontend-architect/)：面向复杂前端系统的架构设计、审计、技术选型和渐进式演进。
 
 ## 使用 Skill
 
-复制或软链接目标 Skill 到 Codex 的 Skills 目录：
+复制或软链接目标 Skill 到 Codex 的 Skills 目录，例如：
 
 ```bash
 ln -s "$(pwd)/skills/codex-troubleshooter" ~/.codex/skills/codex-troubleshooter
