@@ -76,10 +76,61 @@ def validate_plugins(errors: list[str]) -> None:
             errors.append(f"{manifest.relative_to(ROOT)}: name must match directory")
 
 
+def parse_agent_metadata(path: Path) -> dict[str, str]:
+    text = path.read_text(encoding="utf-8")
+    metadata: dict[str, str] = {}
+    for field in ("name", "description", "sandbox_mode"):
+        match = re.search(rf'^\s*{field}\s*=\s*"([^"\n]*)"\s*$', text, re.MULTILINE)
+        if match:
+            metadata[field] = match.group(1)
+
+    instructions = re.search(
+        r'^\s*developer_instructions\s*=\s*"""(.*?)"""\s*$',
+        text,
+        re.MULTILINE | re.DOTALL,
+    )
+    if instructions:
+        metadata["developer_instructions"] = instructions.group(1).strip()
+    return metadata
+
+
+def validate_agents(errors: list[str]) -> None:
+    agents_dir = ROOT / "agents"
+    if not agents_dir.is_dir():
+        return
+
+    seen_names: set[str] = set()
+    for agent_file in sorted(agents_dir.glob("*.toml")):
+        data = parse_agent_metadata(agent_file)
+
+        for field in ("name", "description", "developer_instructions"):
+            value = data.get(field)
+            if not isinstance(value, str) or not value.strip():
+                errors.append(f"{agent_file.relative_to(ROOT)}: missing {field!r}")
+
+        name = data.get("name")
+        if not isinstance(name, str) or not name:
+            continue
+        expected_name = agent_file.stem.replace("-", "_")
+        if name != expected_name:
+            errors.append(
+                f"{agent_file.relative_to(ROOT)}: name must match {expected_name!r}"
+            )
+        if name in seen_names:
+            errors.append(f"{agent_file.relative_to(ROOT)}: duplicate agent name {name!r}")
+        seen_names.add(name)
+
+        if "review" in name and data.get("sandbox_mode") != "read-only":
+            errors.append(
+                f"{agent_file.relative_to(ROOT)}: review agents must use sandbox_mode = 'read-only'"
+            )
+
+
 def main() -> int:
     errors: list[str] = []
     validate_skills(errors)
     validate_plugins(errors)
+    validate_agents(errors)
     if errors:
         print("Repository validation failed:", file=sys.stderr)
         for error in errors:

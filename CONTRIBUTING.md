@@ -32,6 +32,15 @@
 
 每个 Codex Plugin 必须包含 `.codex-plugin/plugin.json`。仅在对应资源真实存在时声明 Skills、MCP Servers 或 Apps，并使用 Codex Plugin 校验器验证。
 
+## Project Agents
+
+可分发的 Codex Agent 资产放在 `agents/<agent-name>.toml`。每个文件必须包含 `name`、`description` 和 `developer_instructions`；文件名使用 kebab-case，`name` 使用 snake_case，二者语义应一致。
+
+- 开发型 Agent 可以使用 `workspace-write`，但必须保持最小改动并运行相关验证。
+- 审查型 Agent 必须使用 `read-only`，只返回有证据的 findings，不得修改代码。
+- 开发与审查使用独立线程；交接只传需求、基线、diff、验证结果与必要架构信息。
+- 新增或修改 Agent 后运行 `python3 scripts/validate_repository.py`。
+
 ## 提交流程
 
 1. 将资产放入正确的类型目录。
