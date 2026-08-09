@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Migrate legacy .ai/specs/YYYY-MM-DD-slug/spec.md → flat *.spec.md
-# Warn on specs/<slug>/mastergo/ and .ai/mastergo-output (prefer spec §4.8 Prompt)
+# Warn on raw design artifacts that should be distilled into a spec.
 set -euo pipefail
 
 TARGET="${1:-.}"
@@ -35,7 +35,7 @@ if [[ -d "$TARGET/.ai/mastergo-output" ]]; then
   echo "warn: .ai/mastergo-output/ — archive or delete; do not use as验收依据"
 fi
 if [[ -d "$TARGET/.ai/mastergo" ]]; then
-  echo "info: .ai/mastergo/ — legacy extracts; new work uses spec §4.8 + UI-SPEC only"
+  echo "info: .ai/mastergo/ — legacy extracts; distill durable requirements into the relevant spec"
 fi
 
 echo ""

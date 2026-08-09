@@ -1,0 +1,4 @@
+interface:
+  display_name: "初始化 AI Agent 开发项目"
+  short_description: "按技术栈与项目形态生成专属 Agent 规则和项目宪法"
+  default_prompt: "使用 $init-ai-agent-project 勘察当前仓库，并按正确的技术栈与项目形态初始化 AI Agent 协作规则。"

@@ -32,12 +32,9 @@ if [[ -f "$TARGET/constitution.md" ]]; then
   remove_if_exists "$TARGET/constitution.md"
 fi
 
-# agents.md (lowercase legacy) — root should only keep AGENTS.md pointer
-if [[ -f "$TARGET/agents.md" && "$TARGET/agents.md" != "$TARGET/AGENTS.md" ]]; then
+# agents.md (lowercase legacy) — preserve AGENTS.md when both paths share an inode
+if [[ -f "$TARGET/agents.md" ]] && [[ ! "$TARGET/agents.md" -ef "$TARGET/AGENTS.md" ]]; then
   remove_if_exists "$TARGET/agents.md"
-elif [[ -f "$TARGET/agents.md" ]]; then
-  # case-insensitive FS: agents.md and AGENTS.md are the same file; pointer must remain
-  :
 fi
 
 # plan.md / memory.md — content should already live under .ai/
@@ -45,16 +42,9 @@ for legacy in plan.md memory.md; do
   remove_if_exists "$TARGET/$legacy"
 done
 
-# ui-spec.md / UI.md / design-system.md → .ai/UI-SPEC.md
-if [[ -f "$TARGET/.ai/UI-SPEC.md" ]]; then
-  for legacy in ui-spec.md UI.md design-system.md; do
-    remove_if_exists "$TARGET/$legacy"
-  done
-fi
-
-# Warn deprecated mastergo-output (migrate with migrate-spec-layout.sh + SLUG=)
+# Warn deprecated mastergo-output.
 if [[ -d "$TARGET/.ai/mastergo-output" ]]; then
-  echo "warn: .ai/mastergo-output/ still present — move to specs/YYYY-MM-DD-<slug>/mastergo/ (see migrate-spec-layout.sh)" >&2
+  echo "warn: .ai/mastergo-output/ still present — distill requirements into a spec, then archive or remove raw assets" >&2
 fi
 
 # Flatten mistaken .ai/docs or .ai/notes if present
