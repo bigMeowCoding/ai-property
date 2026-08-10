@@ -1,0 +1,7 @@
+interface:
+  display_name: "接入 Busy ARMS RUM"
+  short_description: "为 H5/Web 项目接入并排查 Busy ARMS 用户体验监控"
+  default_prompt: "使用 $integrate-busy-arms-rum 为这个 H5/Web 项目接入生产可用的 ARMS RUM 监控。"
+
+policy:
+  allow_implicit_invocation: true

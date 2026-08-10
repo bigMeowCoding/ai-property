@@ -17,6 +17,7 @@
 - [`codex-troubleshooter`](skills/codex-troubleshooter/)：诊断并修复 Codex Desktop、CLI、Skill、Plugin、MCP、网络与配置问题。
 - [`frontend-architect`](skills/frontend-architect/)：面向复杂前端系统的架构设计、审计、技术选型和渐进式演进。
 - [`init-ai-agent-project`](skills/init-ai-agent-project/)：按 React、Vue、微信小程序等技术栈与管理端、移动端、API 服务等项目形态，生成专属 `.ai/` 规则、项目宪法和可验收规格。
+- [`integrate-busy-arms-rum`](skills/integrate-busy-arms-rum/)：为团队 H5/Web 项目接入、迁移并排查 `@busy-fe/monitor-web` 与阿里云 ARMS RUM。
 - [`internet-product-manager`](skills/internet-product-manager/)：基于知识库方法论完成产品机会、需求、验证与优先级决策。
 - [`developer_fixer`](agents/developer-fixer.toml)：负责功能开发、缺陷修复、测试和审查后的返修。
 - [`independent_reviewer`](agents/independent-reviewer.toml)：只读的独立对抗性审查 Agent，聚焦正确性、安全、回归与测试盲区。
