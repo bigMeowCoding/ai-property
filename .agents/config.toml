@@ -1,0 +1,17 @@
+# 本项目的 Codex 多 Agent 配置；角色定义位于 .agents/agents/。
+[agents]
+enabled = true
+max_concurrent_threads_per_session = 3
+
+# 凭据通过环境变量注入；MCP 默认关闭，按需在 Codex 中启用。
+[mcp_servers.mastergo-magic-mcp]
+command = "sh"
+args = ["-c", 'exec npx -y @mastergo/magic-mcp --token="$MASTERGO_MAGIC_MCP_TOKEN" --url=https://mastergo.com']
+env_vars = ["MASTERGO_MAGIC_MCP_TOKEN"]
+enabled = false
+
+[mcp_servers."API 文档"]
+command = "npx"
+args = ["-y", "apifox-mcp-server@latest", "--project=8626767"]
+env_vars = ["APIFOX_ACCESS_TOKEN"]
+enabled = false
