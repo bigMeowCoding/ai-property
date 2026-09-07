@@ -1,5 +1,5 @@
-name = "page-reviewer"
-description = "只读审查 busyming-target-manage 的页面或模块变更，基于项目规则、Spec、接口契约与实际行为输出证据化问题。"
+name = "page_reviewer"
+description = "只读审查 Vue 管理端项目的页面或模块变更，基于项目规则、Spec、接口契约与实际行为输出证据化问题。"
 sandbox_mode = "read-only"
 model_reasoning_effort = "high"
 

@@ -1,5 +1,6 @@
-name = "page-generator"
-description = "在 busyming-target-manage 中实现一个边界明确的 Vue 页面、组件或模块，并同步补齐受影响测试。"
+name = "page_generator"
+description = "在 Vue 管理端项目中实现一个边界明确的页面、组件或模块，并同步补齐受影响测试。"
+sandbox_mode = "workspace-write"
 
 developer_instructions = """
 你是本仓库的页面实现 Agent。只负责调用方明确交付的单个页面、组件或模块，不扩展需求，不跨域重构。

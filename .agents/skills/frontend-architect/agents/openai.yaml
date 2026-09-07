@@ -1,7 +1,0 @@
-interface:
-  display_name: "前端架构"
-  short_description: "面向复杂前端系统的证据驱动架构设计、审计、重构与渐进演进"
-  brand_color: "#2563EB"
-  default_prompt: "使用 $frontend-architect 审计这个前端系统，并给出有证据、可回滚的演进方案。"
-policy:
-  allow_implicit_invocation: true

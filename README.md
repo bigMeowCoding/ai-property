@@ -13,14 +13,26 @@
 
 当前资产：
 
+- [`busy-ui`](skills/busy-ui/)：提供 `@busy-fe/ui` v7 管理端组件选型、API、迁移与页面模式指南。
 - [`code-craft-and-refactoring`](skills/code-craft-and-refactoring/)：以证据驱动编码、重构、评审、性能与安全优化，并与前端架构工作双向路由。
 - [`codex-troubleshooter`](skills/codex-troubleshooter/)：诊断并修复 Codex Desktop、CLI、Skill、Plugin、MCP、网络与配置问题。
 - [`frontend-architect`](skills/frontend-architect/)：面向复杂前端系统的架构设计、审计、技术选型和渐进式演进。
+- [`frontend-design`](skills/frontend-design/)：创建具有明确视觉方向和生产质量的前端界面。
 - [`init-ai-agent-project`](skills/init-ai-agent-project/)：按 React、Vue、微信小程序等技术栈与管理端、移动端、API 服务等项目形态，生成专属 `.ai/` 规则、项目宪法和可验收规格。
 - [`integrate-busy-arms-rum`](skills/integrate-busy-arms-rum/)：为团队 H5/Web 项目接入、迁移并排查 `@busy-fe/monitor-web` 与阿里云 ARMS RUM。
 - [`internet-product-manager`](skills/internet-product-manager/)：基于知识库方法论完成产品机会、需求、验证与优先级决策。
+- [`vue-best-practices`](skills/vue-best-practices/)：提供 Vue 3 Composition API、SFC、响应式与组件设计实践。
+- [`vue-debug-guides`](skills/vue-debug-guides/)：诊断 Vue 3 运行时、异步、响应式与 SSR/Hydration 问题。
+- [`vue-jsx-best-practices`](skills/vue-jsx-best-practices/)：说明 Vue JSX 与 React JSX 的关键语法和配置差异。
+- [`vue-options-api-best-practices`](skills/vue-options-api-best-practices/)：提供 Vue 3 Options API 与 TypeScript 使用规范。
+- [`vue-pinia-best-practices`](skills/vue-pinia-best-practices/)：提供 Pinia Store、状态管理与响应式实践。
+- [`vue-router-best-practices`](skills/vue-router-best-practices/)：提供 Vue Router 4 导航守卫、参数与生命周期实践。
+- [`vue-testing-best-practices`](skills/vue-testing-best-practices/)：提供 Vitest、Vue Test Utils 与 Playwright 测试实践。
 - [`developer_fixer`](agents/developer-fixer.toml)：负责功能开发、缺陷修复、测试和审查后的返修。
 - [`independent_reviewer`](agents/independent-reviewer.toml)：只读的独立对抗性审查 Agent，聚焦正确性、安全、回归与测试盲区。
+- [`page_fixer`](agents/page-fixer.toml)：仅执行已确认的 Vue 管理端页面修复清单并维护相关测试。
+- [`page_generator`](agents/page-generator.toml)：实现边界明确的 Vue 管理端页面、组件或模块。
+- [`page_reviewer`](agents/page-reviewer.toml)：只读审查 Vue 管理端页面变更并输出证据化问题。
 
 ## 使用 Skill
 

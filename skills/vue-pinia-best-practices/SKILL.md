@@ -1,9 +1,10 @@
 ---
 name: vue-pinia-best-practices
 description: "Pinia stores, state management patterns, store setup, and reactivity with stores."
-version: 1.0.0
 license: MIT
-author: github.com/vuejs-ai
+metadata:
+  version: "1.0.0"
+  author: github.com/vuejs-ai
 ---
 
 Pinia best practices, common gotchas, and state management patterns.

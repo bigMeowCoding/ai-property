@@ -1,4 +1,0 @@
-interface:
-  display_name: "代码精进与重构"
-  short_description: "用证据驱动的流程完成编码、重构、评审、性能与安全优化"
-  default_prompt: "使用 $code-craft-and-refactoring 审查这次代码变更，按风险说明问题并给出最小修复与验证方案。"
