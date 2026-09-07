@@ -13,14 +13,20 @@
 
 当前资产：
 
+- [`ahooks`](skills/ahooks/)：提供 ahooks React Hooks 的状态、请求、副作用、性能和 DOM 使用指南。
+- [`ant-design-mobile`](skills/ant-design-mobile/)：提供 Ant Design Mobile 组件、主题、API 与移动端适配指南。
+- [`app-webview-bridge`](skills/app-webview-bridge/)：沉淀运营 App RN WebView 与内嵌 H5 的认证、上下文和原生桥接契约。
+- [`better-scroll`](skills/better-scroll/)：指导 React H5 中 better-scroll v2 的选型、集成和交互问题排查。
 - [`busy-ui`](skills/busy-ui/)：提供 `@busy-fe/ui` v7 管理端组件选型、API、迁移与页面模式指南。
 - [`code-craft-and-refactoring`](skills/code-craft-and-refactoring/)：以证据驱动编码、重构、评审、性能与安全优化，并与前端架构工作双向路由。
 - [`codex-troubleshooter`](skills/codex-troubleshooter/)：诊断并修复 Codex Desktop、CLI、Skill、Plugin、MCP、网络与配置问题。
 - [`frontend-architect`](skills/frontend-architect/)：面向复杂前端系统的架构设计、审计、技术选型和渐进式演进。
 - [`frontend-design`](skills/frontend-design/)：创建具有明确视觉方向和生产质量的前端界面。
+- [`human-ui`](skills/human-ui/)：审查界面的人性化设计、可访问性、交互质感和设计偏好。
 - [`init-ai-agent-project`](skills/init-ai-agent-project/)：按 React、Vue、微信小程序等技术栈与管理端、移动端、API 服务等项目形态，生成专属 `.ai/` 规则、项目宪法和可验收规格。
 - [`integrate-busy-arms-rum`](skills/integrate-busy-arms-rum/)：为团队 H5/Web 项目接入、迁移并排查 `@busy-fe/monitor-web` 与阿里云 ARMS RUM。
 - [`internet-product-manager`](skills/internet-product-manager/)：基于知识库方法论完成产品机会、需求、验证与优先级决策。
+- [`vercel-react-best-practices`](skills/vercel-react-best-practices/)：提供 Vercel React 与 Next.js 性能优化规则。
 - [`vue-best-practices`](skills/vue-best-practices/)：提供 Vue 3 Composition API、SFC、响应式与组件设计实践。
 - [`vue-debug-guides`](skills/vue-debug-guides/)：诊断 Vue 3 运行时、异步、响应式与 SSR/Hydration 问题。
 - [`vue-jsx-best-practices`](skills/vue-jsx-best-practices/)：说明 Vue JSX 与 React JSX 的关键语法和配置差异。
