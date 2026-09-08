@@ -1,21 +1,24 @@
 # App ↔ H5 桥接契约（参考项目实测）
 
-来源：`busyming-store-information-h5`（运营 App `busyming-operation-app` 内嵌）。
-以下均为该项目真机跑通的行为，非推断。文中「参考实现」指该仓库中的文件路径。
+来源：`busyming-store-information-h5` 的历史定制接入（运营 App 内嵌）。
+以下仅描述该旧项目当时真机跑通的行为。新接入不得把本文件当成当前公共 Bridge 契约。
 
 > **本文件是「某个已接入 H5 的实测切片」，不是 App 侧完整口径。**
-> App 侧权威接入指南（Bridge 全表、三类 Token、公共上下文、已知限制、联调清单）见
+> App 侧权威接入指南（基线 `feature/cwc_2.1.5`、提交 `34310b6`）见
 > [app-bridge-api.md](app-bridge-api.md)。两者冲突时**以 App 侧口径为准**，
 > 差异见本文件 §8。
 
-## 0. 注入时机与生命周期
+## 0. 该旧项目的同步注入时机
 
-App 用 RN WebView 的 `injectedJavaScriptBeforeContentLoaded` 注入，因此：
+该旧项目依赖 `injectedJavaScriptBeforeContentLoaded` 注入同步对象，因此：
 
 - H5 的**第一行 JS** 执行时，注入的全局已经存在，可以同步读，不需要轮询等待。
 - 注入只在 WebView 加载文档前发生一次；SPA 内部路由跳转不会重新注入，
   但 WebView 内 `location.reload()` 会重新注入。
 - URL 上会带 `fromApp=operationApp` 作为来源标识。
+
+这些保证不适用于当前公共异步上下文桥。新 H5 应等待 `__APP_GET_CONTEXT__`，桥晚到时监听
+`app-context-bridge-ready`，详见权威文档第一部分。
 
 ## 1. 免登上下文 `window.__APP_CONTEXT__`（参考项目形态）
 
@@ -23,8 +26,9 @@ App 在跳转前已经完成统一门户登录，把结果整体注入，H5 消�
 跳过自身的 OAuth2 / URL token 流程。**后续接口的验签（MSE）仍由 H5 自己逐请求做。**
 
 ⚠️ 下面的字段结构是 **App 侧为该 H5 定制的「路由专用 `appContext`」**（`WebViewScreen`
-的 `route.params.appContext`），**不等于新 H5 默认拿到的公共三项上下文**
-（`unifiedPortal` / `deviceInfo` / `zoneOwnerInfo`，见 app-bridge-api.md §4）。
+的 `route.params.appContext`），**不等于新 H5 通过异步桥拿到的公共五组上下文**
+（`unifiedPortal` / `personnel` / `portalAuthObj` / `deviceInfo` / `zoneOwnerInfo`，
+见 app-bridge-api.md 第一部分 2 与第二部分 8）。
 `busyming-store-opening-h5` 已根据真机口径冻结为混合形态：登录信息读
 `unifiedPortal`，设备信息读 `unifiedTokenResp.data.deviceInfo`，字段不存在时兼容顶层
 `deviceInfo`，并消费 `defaultOperateInfo`。其他新 H5 仍必须真机确认自己拿到的形态，
@@ -70,8 +74,8 @@ interface AppContext {
    H5 内部统一用 `storeBrand`（`ZYM` / `LSHM`）。
 4. 写入时必须清除「上一个用户的派生缓存」（参考实现清 `empNo`），
    否则持久化 store 会让新用户命中旧数据。
-5. 三段调试日志（原始上下文 / 待写入数据 / 写入后 store 实际值）是排查真机免登问题的主要手段，
-   建议保留。
+5. 排错只记录字段是否存在、权限数组长度和脱敏错误码；不打印原始上下文、Token、用户资料或
+   资源树。旧项目若仍保留完整日志，应先移除或做严格脱敏。
 
 「来自 App」判定：
 
@@ -176,13 +180,14 @@ App 侧所有回传都调这个函数。参考实现（`src/App.tsx` 模块顶�
 
 参考实现 `src/utils/debugAppContext.ts`（纯 DOM，可整文件拷贝）：
 
-- `sessionStorage.__debug_app_context__` 存粘贴进来的 JSON；
+- `sessionStorage.__debug_app_context__` 只存人工构造的脱敏 Mock JSON；
 - `applyDebugAppContext()` 在免登初始化**之前**把它写回 `window.__APP_CONTEXT__`
   并置 `from_app_flag='1'`，使后续链路与真机完全一致；
 - 只在「非真机 App WebView」环境挂载悬浮按钮，判定依据是注入函数是否存在
   （`__APP_ROUTER_BACK__` / `__APP_GET_SAFE_AREA__` / `__APP_STATUS_BAR_HEIGHT__`），
   **不能用 `__APP_CONTEXT__` 判定**，因为它自己就会注入这个字段；
-- JSON 非法时提示解析错误并清掉缓存，不要静默失败。
+- JSON 非法时提示解析错误并清掉缓存，不要静默失败。不要从真机复制真实 Token、用户资料或
+  完整资源树到浏览器、源码、文档和截图。
 
 ## 7. 相关但不同源：微信小程序 WebView
 
@@ -197,10 +202,10 @@ App 侧所有回传都调这个函数。参考实现（`src/App.tsx` 模块顶�
 
 | 主题 | 参考项目实测 | App 侧公共口径（app-bridge-api.md） |
 |---|---|---|
-| 上下文形态 | `unifiedTokenResp.data.accessToken` 等定制字段 | `unifiedPortal` / `deviceInfo` / `zoneOwnerInfo` 三项 |
+| 上下文形态 | `unifiedTokenResp.data.accessToken` 等定制同步字段 | `__APP_GET_CONTEXT__()` 异步返回 `unifiedPortal` / `personnel` / `portalAuthObj` / `deviceInfo` / `zoneOwnerInfo` 五组 |
 | 环境判定 | URL 的 `fromApp=operationApp` + 注入函数探测 | `__BUSYMING_OPERATION_APP__ === true` + `ReactNativeWebView.postMessage` |
 | 业务 Token | 未使用 | 另有 `__APP_TOKEN__`（App 主登录）与 `__APP_GET_TOKEN_AUTHINFO__`（人资中台），与统一门户 Token 三者不可互换 |
-| 相机 / 相册 / 录像 | 事件流旧协议 + `receiveRNData` | 已提供 `__APP_*_WITH_RESULT__` Promise 新协议，新 H5 优先用它 |
+| 相机 / 相册 / 录像 | 事件流旧协议 + `receiveRNData`，带项目自定义配对封装 | 已提供 `__APP_*_WITH_RESULT__` Promise 新协议，新 H5 优先用它；旧协议按 `uuid`/`key` 与真实事件处理，不把自定义 `__requestId` 当公共保证 |
 | 安全区 | `__APP_GET_SAFE_AREA__` 返回字符串或对象都兼容 | 声明为 JSON 字符串；`__APP_STATUS_BAR_HEIGHT__` 是数字字符串 |
 
 参考项目未涉及、但 App 已提供的能力（导航、权限、扫码、定位、文件预览、签名、

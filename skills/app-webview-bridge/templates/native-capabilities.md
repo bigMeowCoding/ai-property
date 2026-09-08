@@ -1,467 +1,265 @@
-# 模板：原生能力（安全区 / 返回 / 相机相册 / App 回传）
+# 模板：常用原生能力
 
-四项与登录态无耦合，可独立接入。代码风格已对齐本项目 ESLint（无分号、单引号）。
+按项目实际使用的部分复制。方法签名和完整类型以
+[权威文档附录 A](../reference/app-bridge-api.md) 为准；调用前仍需检测目标安装包中的具体方法。
 
-## 1. 安全区 → `src/helpers/safeArea.ts`
-
-```ts
-/**
- * 安全区（刘海屏 / 状态栏 / 底部 home indicator）适配。
- *
- * 纯浏览器可用 CSS env(safe-area-inset-*)，但 App（RN WebView）内 env() 取不到值，
- * 必须用 App 注入的：
- *  - window.__APP_GET_SAFE_AREA__()  -> JSON 字符串或对象 { top, bottom, left, right }
- *  - window.__APP_STATUS_BAR_HEIGHT__ -> 仅顶部的退化值
- *  - window.onReactNativeSafeAreaInsetsChange(insets) -> App 实时回传（旋转等）
- *
- * 结果写入 :root 的 CSS 变量，页面统一用 var(--app-safe-top) / var(--app-safe-bottom) 消费。
- */
-
-export interface SafeAreaInsets {
-  top: number;
-  bottom: number;
-}
-
-type RawInsets = {
-  top?: number;
-  bottom?: number;
-  left?: number;
-  right?: number;
-}
-
-const TOP_VAR = '--app-safe-top'
-const BOTTOM_VAR = '--app-safe-bottom'
-
-let current: SafeAreaInsets = { top: 0, bottom: 0 }
-let initialized = false
-const listeners = new Set<(insets: SafeAreaInsets) => void>()
-
-/** 只接受有限非负数，避免 App 传 -1 / null 把布局顶坏 */
-const toNumber = (value: unknown): number | undefined => {
-  const n = typeof value === 'string' ? Number(value) : (value as number)
-
-  return Number.isFinite(n) && n >= 0 ? n : undefined
-}
-
-/** 读取 App 注入的安全区；纯浏览器返回 null */
-const readInjectedInsets = (): RawInsets | null => {
-  const w = window as unknown as {
-    __APP_GET_SAFE_AREA__?: () => string | RawInsets;
-    __APP_STATUS_BAR_HEIGHT__?: number | string;
-  }
-
-  try {
-    if (typeof w.__APP_GET_SAFE_AREA__ === 'function') {
-      const raw = w.__APP_GET_SAFE_AREA__()
-      const insets = typeof raw === 'string' ? JSON.parse(raw) : raw
-
-      if (insets && typeof insets === 'object') return insets as RawInsets
-    }
-  } catch {
-    /* 解析失败走下面的退化逻辑 */
-  }
-
-  const top = toNumber(w.__APP_STATUS_BAR_HEIGHT__)
-
-  if (top !== undefined) return { top }
-
-  return null
-}
-
-const applyInsets = (raw: RawInsets) => {
-  const root = document.documentElement
-  const top = toNumber(raw.top)
-  const bottom = toNumber(raw.bottom)
-
-  if (top !== undefined) {
-    root.style.setProperty(TOP_VAR, `${top}px`)
-    current = { ...current, top }
-  }
-
-  if (bottom !== undefined) {
-    root.style.setProperty(BOTTOM_VAR, `${bottom}px`)
-    current = { ...current, bottom }
-  }
-
-  listeners.forEach((cb) => cb(current))
-}
-
-/**
- * 初始化安全区（在 setupApp 里调用一次）。
- * 纯浏览器不覆盖 CSS 变量，沿用样式里的 env(safe-area-inset-*) 默认值。
- */
-export const initSafeArea = (): void => {
-  if (initialized) return
-  initialized = true
-
-  const insets = readInjectedInsets()
-
-  if (insets) applyInsets(insets)
-
-  // App 在安全区变化（如旋转）时回调
-  ;(window as unknown as {
-    onReactNativeSafeAreaInsetsChange?: (i: RawInsets) => void
-  }).onReactNativeSafeAreaInsetsChange = (next: RawInsets) => {
-    if (next && typeof next === 'object') applyInsets(next)
-  }
-}
-
-/** 获取当前安全区数值（px） */
-export const getSafeAreaInsets = (): SafeAreaInsets => current
-
-/** 订阅安全区变化，返回取消订阅函数 */
-export const subscribeSafeArea = (cb: (insets: SafeAreaInsets) => void): (() => void) => {
-  listeners.add(cb)
-
-  return () => listeners.delete(cb)
-}
-```
-
-配套样式（`src/styles/index.scss`）：
-
-```scss
-:root {
-  --app-safe-top: env(safe-area-inset-top, 0px);
-  --app-safe-bottom: env(safe-area-inset-bottom, 0px);
-}
-```
-
-## 2. 返回 → `src/hooks/useAppBack.ts`
+## 公共调用工具
 
 ```ts
-import { useCallback } from 'react'
-
-import { useNavigate } from 'react-router-dom'
-
-/**
- * 通用返回（App 内嵌感知）。
- *
- * - H5 本会话内有过 push → 返回上一页；
- * - 无路由栈（App 跳入的入口页）→ 调 window.__APP_ROUTER_BACK__() 关闭 WebView 回到 App；
- * - 纯浏览器无桥 → navigate(-1) 兜底。
- *
- * 判定依据：react-router 的 createBrowserRouter 在 window.history.state.idx 维护栈索引，
- * idx > 0 表示本会话内有可返回的历史。顺序不能反 —— 直接调 App back 会关掉整个 WebView，
- * 丢掉 H5 内部的多级历史。
- */
-export function useAppBack(): () => void {
-  const navigate = useNavigate()
-
-  return useCallback(() => {
-    const idx = (window.history.state?.idx as number | undefined) ?? 0
-
-    if (idx > 0) {
-      navigate(-1)
-
-      return
-    }
-
-    const appBack = (window as unknown as {
-      __APP_ROUTER_BACK__?: () => void
-    }).__APP_ROUTER_BACK__
-
-    if (typeof appBack === 'function') {
-      appBack()
-
-      return
-    }
-
-    navigate(-1)
-  }, [ navigate ])
-}
-
-export default useAppBack
-```
-
-## 3. 原生能力调用 → `src/hooks/useAppBridgeCall.ts`
-
-```ts
-import { useEffect, useState } from 'react'
-
-/**
- * App 原生能力调用（请求-回调模型）。
- *
- * 发起：调 App 注入的函数并传 JSON 字符串（含 __requestId）；
- * 回调：App 调 window.receiveRNData，由 installAppMessageReceiver 转成同名 CustomEvent。
- */
-
-export enum AppBridgeTypeEnum {
-  CAMERA = 'camera',
-  ALBUM = 'album',
-  VIDEO = 'video'
-}
-
-/** 类型 → 注入函数名 */
-const BRIDGE_NAME_MAP: Record<AppBridgeTypeEnum, string> = {
-  [AppBridgeTypeEnum.CAMERA]: '__APP_GO_TO_CAMERA__',
-  [AppBridgeTypeEnum.ALBUM]: '__APP_OPEN_PICKER__',
-  [AppBridgeTypeEnum.VIDEO]: '__APP_OPEN_TRANSCRIBE__'
-}
-
-/** 类型 → App 回调的 eventType */
-const CALLBACK_EVENT_MAP: Record<AppBridgeTypeEnum, string> = {
-  [AppBridgeTypeEnum.CAMERA]: 'cameraCallback',
-  [AppBridgeTypeEnum.ALBUM]: 'pickerCallback',
-  [AppBridgeTypeEnum.VIDEO]: 'transcribeCallback'
-}
-
-/** 类型 → 文案 */
-const LANG_MAP: Record<AppBridgeTypeEnum, string> = {
-  [AppBridgeTypeEnum.CAMERA]: '相机',
-  [AppBridgeTypeEnum.ALBUM]: '相册',
-  [AppBridgeTypeEnum.VIDEO]: '视频'
-}
-
-interface CallBridgeResult {
-  success: boolean;
-  error?: string;
-  duration?: number;
-  data?: any;
-}
-
-interface PendingCall {
-  resolve: (res: CallBridgeResult) => void;
-  timeoutId: number | null;
-  callbackEvent: string;
-}
-
-/** 在途调用必须放模块级 Map（跨组件实例共享），不能放组件 state */
-const pendingCalls = new Map<string, PendingCall>()
-
-const settle = (id: string, entry: PendingCall, data: any) => {
-  pendingCalls.delete(id)
-
-  if (entry.timeoutId) window.clearTimeout(entry.timeoutId)
-
-  entry.resolve({ success: true, data })
-}
-
-/** 三级配对降级：requestId → eventType → 唯一在途调用 */
-const handleIncoming = (payload: any): boolean => {
-  let parsed = payload
-
-  try {
-    if (typeof payload === 'string') parsed = JSON.parse(payload)
-  } catch {
-    parsed = payload
-  }
-
-  const reqId = parsed?.__requestId ?? parsed?.requestId ?? parsed?.request_id ?? null
-
-  if (reqId && pendingCalls.has(reqId)) {
-    settle(reqId, pendingCalls.get(reqId)!, parsed)
-
-    return true
-  }
-
-  const eventType = parsed?.eventType || parsed?.event || null
-
-  if (eventType) {
-    const hit = Array.from(pendingCalls.entries())
-      .find(([ , entry ]) => entry.callbackEvent === eventType)
-
-    if (hit) {
-      settle(hit[0], hit[1], parsed)
-
-      return true
-    }
-  }
-
-  if (pendingCalls.size === 1) {
-    const [ [ id, entry ] ] = Array.from(pendingCalls.entries())
-
-    settle(id, entry, parsed)
-
-    return true
-  }
-
-  return false
-}
-
-/** 注入的桥可能是函数，也可能是需要赋值的对象 */
-const hasBridge = (bridgeName: string): boolean => {
-  try {
-    const bridge = (window as any)[bridgeName]
-
-    return typeof bridge === 'function' || typeof bridge === 'object'
-  } catch {
-    return false
-  }
-}
-
-export function useAppBridgeCall(options: {
-  type: AppBridgeTypeEnum;
-  timeout?: number;
-}) {
-  const { type, timeout = 10 * 1000 } = options
-  const typeLang = LANG_MAP[type]
-  const bridgeName = BRIDGE_NAME_MAP[type]
-  const callbackEvent = CALLBACK_EVENT_MAP[type]
-
-  const [ isCalling, setIsCalling ] = useState(false)
-
-  useEffect(() => {
-    const handleEvent = (ev: any) => {
-      handleIncoming(ev?.detail ?? ev)
-      setIsCalling(false)
-    }
-
-    window.addEventListener(callbackEvent, handleEvent as EventListener)
-
-    return () => {
-      window.removeEventListener(callbackEvent, handleEvent as EventListener)
-      setIsCalling(false)
-    }
-  }, [ callbackEvent ])
-
-  const callBridge = (params: Record<string, any> = {}): Promise<CallBridgeResult> => {
-    // 桥不存在（纯浏览器 / 低版本 App）时返回不可用，不抛错
-    if (!hasBridge(bridgeName)) {
-      return Promise.resolve({ success: false, error: `${typeLang}功能不可用` })
-    }
-
-    return new Promise<CallBridgeResult>((resolve) => {
-      const start = Date.now()
-      const reqId = `${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
-
-      // 必须有超时兜底：用户在原生页面点取消时 App 可能不回调，否则 Promise 永挂
-      const timeoutId = window.setTimeout(() => {
-        pendingCalls.delete(reqId)
-        setIsCalling(false)
-        resolve({
-          success: false,
-          error: `${typeLang}响应超时`,
-          duration: Date.now() - start
-        })
-      }, timeout)
-
-      pendingCalls.set(reqId, { resolve, timeoutId, callbackEvent })
-      setIsCalling(true)
-
-      try {
-        // 注入函数只接受字符串参数
-        const argStr = JSON.stringify({ ...params, __requestId: reqId })
-        const bridge = (window as any)[bridgeName]
-
-        if (typeof bridge === 'function') bridge(argStr)
-        else (window as any)[bridgeName] = argStr
-      } catch (error) {
-        pendingCalls.delete(reqId)
-        window.clearTimeout(timeoutId)
-        setIsCalling(false)
-        resolve({
-          success: false,
-          error: `${typeLang}调用异常`,
-          duration: Date.now() - start
-        })
-      }
+export function requireBridge<K extends keyof AppBridgeMethods>(name: K): AppBridgeMethods[K] {
+  if (typeof window === 'undefined' || typeof window[name] !== 'function') {
+    throw Object.assign(new Error(`当前页面不支持 ${name}`), {
+      code: 'BRIDGE_UNAVAILABLE',
     })
   }
 
-  return { isCalling, callBridge }
+  return window[name] as AppBridgeMethods[K]
 }
 
-export default useAppBridgeCall
+export function withBridgeTimeout<T>(task: Promise<T>, timeoutMs: number): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = window.setTimeout(() => reject(Object.assign(
+      new Error('App 操作等待超时'),
+      { code: 'BRIDGE_TIMEOUT' },
+    )), timeoutMs)
+
+    task.then(value => {
+      window.clearTimeout(timer)
+      resolve(value)
+    }, error => {
+      window.clearTimeout(timer)
+      reject(error)
+    })
+  })
+}
 ```
 
-## 4. App → H5 消息入口 → `src/helpers/installAppMessageReceiver.ts`
+H5 超时只结束等待，不会关闭原生页面、相机或上传任务。超时后不要自动再次调用交互桥。
+
+## 安全区
+
+`__APP_GET_SAFE_AREA__()` 当前同步返回 JSON 字符串。App 旋转后通过
+`onReactNativeSafeAreaInsetsChange` 推送对象；两者都要接。若原生入口已设置
+`needSafeArea: true`，避免 H5 再叠加同一边距。
 
 ```ts
-/**
- * 安装 App 回传数据的统一入口 window.receiveRNData，把 payload 转成同名 CustomEvent，
- * 业务侧只用 window.addEventListener(eventType, handler) 消费。
- *
- * 必须在 setupApp 中模块级安装：放进组件 effect 会被 StrictMode 双跑，
- * 且组件卸载后会摘掉全局能力。
- */
+const SAFE_AREA_VARS = {
+  top: '--app-safe-top',
+  right: '--app-safe-right',
+  bottom: '--app-safe-bottom',
+  left: '--app-safe-left',
+} as const
 
-const INSTALLED_FLAG = '__APP_RECEIVE_INSTALLED__'
+function toInset(value: unknown): number | null {
+  const number = Number(value)
 
-export const installAppMessageReceiver = (): void => {
-  const w = window as any
-
-  // 幂等：HMR / 多次调用不重复包装
-  if (w[INSTALLED_FLAG]) return
-
-  // 保留已存在的实现并链式调用，避免吞掉其他模块的回调
-  const origin = w.receiveRNData
-
-  w.receiveRNData = (payload: any) => {
-    let parsed = payload
-
-    try {
-      if (typeof payload === 'string') parsed = JSON.parse(payload)
-    } catch {
-      parsed = payload
-    }
-
-    const eventType = parsed?.eventType || parsed?.event || null
-
-    if (eventType && typeof eventType === 'string') {
-      window.dispatchEvent(new CustomEvent(eventType, { detail: parsed }))
-    }
-
-    if (typeof origin === 'function') origin(payload)
-
-    return true
-  }
-
-  w[INSTALLED_FLAG] = true
+  return Number.isFinite(number) && number >= 0 ? number : null
 }
 
-export default installAppMessageReceiver
-```
+function applySafeArea(insets: Partial<AppInsets>): void {
+  for (const edge of Object.keys(SAFE_AREA_VARS) as Array<keyof AppInsets>) {
+    const value = toInset(insets[edge])
 
-## 5. 类型声明补充 → `src/types/global.d.ts`
-
-现有文件只有 `declare const __BUILD_TIME__`（无 import/export，属全局脚本），
-补充 `Window` 时包在 `declare global` 里可以与之共存：
-
-```ts
-declare global {
-  interface Window {
-    /** App 注入的免登上下文 */
-    __APP_CONTEXT__?: Record<string, any>;
-    /** 关闭 WebView 返回 App */
-    __APP_ROUTER_BACK__?: () => void;
-    /** 安全区，返回 JSON 字符串或对象 */
-    __APP_GET_SAFE_AREA__?: () => string | Record<string, number>;
-    /** 状态栏高度（安全区的退化值） */
-    __APP_STATUS_BAR_HEIGHT__?: number | string;
-    /** App 回传数据的统一入口 */
-    receiveRNData?: (payload: any) => boolean;
-    /** 安全区变化回调，由 H5 赋值、App 调用 */
-    onReactNativeSafeAreaInsetsChange?: (insets: Record<string, number>) => void;
+    if (value !== null) {
+      document.documentElement.style.setProperty(SAFE_AREA_VARS[edge], `${value}px`)
+    }
   }
 }
 
-export {}
+export function initAppSafeArea(): void {
+  try {
+    if (typeof window.__APP_GET_SAFE_AREA__ === 'function') {
+      const raw = window.__APP_GET_SAFE_AREA__()
+      applySafeArea(JSON.parse(raw) as AppInsets)
+    } else if (window.__APP_STATUS_BAR_HEIGHT__ != null) {
+      applySafeArea({ top: Number(window.__APP_STATUS_BAR_HEIGHT__) })
+    }
+  } catch {
+    // 保留 CSS env() 默认值，不输出原始 Bridge 数据。
+  }
+
+  const previous = window.onReactNativeSafeAreaInsetsChange
+
+  window.onReactNativeSafeAreaInsetsChange = insets => {
+    applySafeArea(insets)
+    previous?.(insets)
+  }
+}
 ```
 
-上面只声明了本模板用到的字段。**完整的 window 声明见
-[app-bridge-api.md](../reference/app-bridge-api.md) §12**，按本项目实际用到的能力挑选，
-不要整段照抄 operation-h5 的旧声明（其中 `__APP_GET_VERSION__` 被写成字符串，实际是
-`Promise<string>`）。
+```css
+:root {
+  --app-safe-top: env(safe-area-inset-top, 0px);
+  --app-safe-right: env(safe-area-inset-right, 0px);
+  --app-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --app-safe-left: env(safe-area-inset-left, 0px);
+}
+```
 
-## 6. 与 App 侧 Promise 新协议的关系
+## 返回和导航
 
-§3 的「请求-回调」模型对应的是 App 的**事件流旧协议**。App 侧已提供 Promise 新协议，
-新接入 H5 优先用后者：
+`__APP_ROUTER_BACK__()` 已由 App 处理“网页有历史则后退、无历史则交给宿主或关闭原生页”的
+顺序。业务不要把它描述成必定关闭 WebView。
 
-| 能力 | 事件流旧协议（§3 模型） | Promise 新协议（优先） |
-|---|---|---|
-| 相册 | `__APP_OPEN_PICKER__` + `pickerCallback` | `__APP_OPEN_PICKER_WITH_RESULT__(args)` |
-| 拍照 | `__APP_GO_TO_CAMERA__` + `cameraCallback` | `__APP_GO_TO_CAMERA_WITH_RESULT__(args)` |
-| 录像 | `__APP_OPEN_TRANSCRIBE__` + `transcribeCallback` | `__APP_OPEN_TRANSCRIBE_WITH_RESULT__(args)` |
+```ts
+export function goBackFromH5(browserFallback: () => void): void {
+  if (typeof window.__APP_ROUTER_BACK__ === 'function') {
+    window.__APP_ROUTER_BACK__()
+    return
+  }
 
-新协议直接 `await` 得到 `{ success, data: UploadedFile[], error }`，不需要自己维护在途
-`Map`、requestId 配对和三级降级。
+  browserFallback()
+}
+```
 
-仍需要旧协议的情况只有三种：需要上传进度（`onUploadProgressCallback`）、
-需要多文件逐条回调、或必须兼容没有新协议的旧 App 版本。此时注意：
+其他导航选择：
 
-- 旧协议的打开状态回调（`onOpenCameraCallback` 等）App 实际回传的是**字符串**
-  `'true'` / `'false'`，**禁止 `if (value)`** —— `'false'` 是真值。
-- 两套协议不要对同一次用户操作同时发起，否则会重复拉起原生页。
+- 同一 H5 的列表到详情：使用 H5 Router。
+- 回 App 主容器的运营指导工作台：`__APP_GO_HOME_TAB__()`，不接受 Tab 参数。
+- 打开独立可信页面：`__APP_OPEN_NEW_WINDOW__(fullHttpsUrl, needSafeArea, needNarBar, narBarTitle)`。
+- 修改当前容器顶部栏：`__OPEN_APP_WEBVIEW__(isShowBack, title)`，它不会新开页面。
+- 打开工作台抽屉：仅在 `__APP_OPEN_WORKBENCH_DRAWER__` 存在时显示入口。
 
-判定顺序：先探 `__APP_*_WITH_RESULT__`，不存在再退旧协议，都不存在退 `<input type="file">`。
+不要把 Token 放进新页面 URL。新 WebView 不继承当前组件状态、内存缓存或 H5 路由栈，需重新
+初始化上下文。
+
+## Promise 媒体协议（新项目优先）
+
+相册、相机和录像由 App 完成选择/拍摄及上传。顶层 `success: true` 仍可能包含单文件失败，
+必须逐项检查 `status` 与 `fileUrl`。
+
+```ts
+export interface AcceptedMediaResult {
+  files: UploadedFile[]
+  failed: UploadedFile[]
+  cancelled: boolean
+}
+
+export function acceptMediaResult(result: MediaBridgeResult): AcceptedMediaResult {
+  if (!result.success) {
+    if (result.error === 'cancel') {
+      return { files: [], failed: [], cancelled: true }
+    }
+
+    throw new Error('媒体操作失败，请重试')
+  }
+
+  const files = result.data.filter(file => file.status === 'success' && Boolean(file.fileUrl))
+  const failed = result.data.filter(file => file.status !== 'success' || !file.fileUrl)
+
+  return { files, failed, cancelled: false }
+}
+
+export async function pickPhotos(): Promise<AcceptedMediaResult> {
+  // 交互可能包含用户选择和多文件上传，不设置机械的 5 秒/15 秒超时。
+  const result = await requireBridge('__APP_OPEN_PICKER_WITH_RESULT__')({
+    count: 3,
+    mediaType: 'photo',
+    fileSizeLimit: 20,
+  })
+
+  return acceptMediaResult(result)
+}
+
+export async function takeStorePhoto(): Promise<AcceptedMediaResult> {
+  const result = await requireBridge('__APP_GO_TO_CAMERA_WITH_RESULT__')({
+    count: 1,
+    number: 0,
+    cameraPosition: 'back',
+    fileSizeLimit: 20,
+    cameraTip: {
+      title: '拍摄门店正面',
+      subtitle: '请保持门头完整、文字清楚',
+    },
+  })
+
+  return acceptMediaResult(result)
+}
+
+export async function recordStoreVideo(): Promise<AcceptedMediaResult> {
+  const result = await requireBridge('__APP_OPEN_TRANSCRIBE_WITH_RESULT__')({
+    fileSizeLimit: 100,
+  })
+
+  return acceptMediaResult(result)
+}
+```
+
+调用按钮应有单实例忙碌状态。取消不是成功附件，部分失败应明确提示，上传成功也不等于业务表单
+已保存。新相册协议当前不保证旧水印链路生效。
+
+## 手写签名
+
+```ts
+export async function requestSignature(): Promise<string | null> {
+  const result = await requireBridge('__APP_OPEN_SIGNATURE__')({
+    title: '门店确认签名',
+    penColor: '#000000',
+    penWidth: 4,
+    returnBase64: false,
+  })
+
+  if (!result.success) {
+    if (result.reason === 'cancelled') return null
+    throw new Error('签名未完成，请重试')
+  }
+
+  if (!result.fileUrl) throw new Error('签名未返回可保存的文件地址')
+
+  return result.fileUrl
+}
+```
+
+不要并发打开多个签名页，不打印 Base64 或本地文件路径。原生 5 分钟超时通常通过
+`{ success: false, reason: 'timeout' }` 返回。
+
+## 旧媒体/文件事件流（仅兼容时使用）
+
+旧桥返回 `void`，打开状态回调经 `onOpen…Callback`，上传进度/结果经 `receiveRNData`。
+它们不是可以保证 settle 的 Promise。用业务 `uuid` 关联批次、用回调里的 `key` 关联文件或取消；
+不要自造底层 `callbackId` 或 `__requestId`。
+
+```ts
+const LEGACY_EVENT = 'app-legacy-upload'
+let legacyReceiverInstalled = false
+
+export function installLegacyUploadReceiver(): void {
+  if (legacyReceiverInstalled) return
+
+  legacyReceiverInstalled = true
+  const previous = window.receiveRNData
+
+  window.receiveRNData = data => {
+    window.dispatchEvent(new CustomEvent<LegacyUploadMessage>(LEGACY_EVENT, {
+      detail: data,
+    }))
+    previous?.(data)
+  }
+}
+
+export function openLegacyCamera(uuid: string): void {
+  requireBridge('__APP_GO_TO_CAMERA__')(JSON.stringify({
+    uuid,
+    count: 1,
+    number: 0,
+    cameraPosition: 'back',
+    fileSizeLimit: 20,
+  }))
+}
+```
+
+在根模块先安装接收器，并精确比较打开回调值：`value === true || value === 'true'`；
+`Boolean('false')` 是 `true`，不能使用。监听事件时至少处理 `progress`、`success`、`error`、
+`cancel`，旧视频成功还可能拼写为 `complated`。旧文件选择取消不保证统一结束事件，UI 必须允许
+用户手动退出忙碌状态。
+
+一次用户操作不要同时调用新旧两套媒体协议。只有需要上传进度、逐文件回调或兼容缺少
+`*_WITH_RESULT__` 的目标安装包时才进入本节。
+
+## 生命周期与键盘
+
+生命周期消费必须读取 `__APP_LIFECYCLE_STATE__` 初始快照、监听 `appLifecycleChange`，并按
+`sequence` 去重。键盘桥没有注销函数，只在根模块注册一次，再经应用自己的状态层分发。
+
+完整示例及其他能力（定位、权限、扫码、文件预览、地图、报告分享、巡店）直接使用权威文档中
+对应章节，避免复制一份会漂移的二级说明。
