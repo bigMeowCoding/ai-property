@@ -34,11 +34,8 @@
 - [`vue-pinia-best-practices`](skills/vue-pinia-best-practices/)：提供 Pinia Store、状态管理与响应式实践。
 - [`vue-router-best-practices`](skills/vue-router-best-practices/)：提供 Vue Router 4 导航守卫、参数与生命周期实践。
 - [`vue-testing-best-practices`](skills/vue-testing-best-practices/)：提供 Vitest、Vue Test Utils 与 Playwright 测试实践。
-- [`developer_fixer`](agents/developer-fixer.toml)：负责功能开发、缺陷修复、测试和审查后的返修。
-- [`independent_reviewer`](agents/independent-reviewer.toml)：只读的独立对抗性审查 Agent，聚焦正确性、安全、回归与测试盲区。
-- [`page_fixer`](agents/page-fixer.toml)：仅执行已确认的 Vue 管理端页面修复清单并维护相关测试。
-- [`page_generator`](agents/page-generator.toml)：实现边界明确的 Vue 管理端页面、组件或模块。
-- [`page_reviewer`](agents/page-reviewer.toml)：只读审查 Vue 管理端页面变更并输出证据化问题。
+- [`developer`](agents/developer.toml)：统一承担功能开发、缺陷修复和已确认审查意见返修，并按任务切换执行边界。
+- [`code_reviewer`](agents/code-reviewer.toml)：只读的独立审查 Agent，覆盖通用代码与 Vue 管理端专项审查。
 
 ## 使用 Skill
 
@@ -62,7 +59,7 @@ cp agents/*.toml /path/to/project/.codex/agents/
 安装后可直接要求：
 
 ```text
-让 developer_fixer 完成实现；完成后新开 independent_reviewer，仅根据需求、diff 和测试结果独立审查。
+让 developer 完成实现；完成后新开 code_reviewer，仅根据需求、diff 和测试结果独立审查。
 ```
 
 审查 Agent 配置为只读，开发 Agent 配置为工作区写入；实际权限仍受父任务的权限模式约束。两者应使用独立线程，交接时只传需求、基线、diff、测试结果和必要架构信息。
