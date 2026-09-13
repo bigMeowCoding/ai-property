@@ -1,0 +1,4 @@
+interface:
+  display_name: "Spring 分层架构"
+  short_description: "约束 Spring Boot 分层、依赖方向与领域边界"
+  default_prompt: "Use $layered-architecture to design this Spring Boot feature with clear layer boundaries."

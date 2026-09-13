@@ -1,0 +1,4 @@
+interface:
+  display_name: "Spring 事务模式"
+  short_description: "设计并验证 Spring 事务、并发控制与安全回滚边界"
+  default_prompt: "Use $transactional-patterns to define and verify the transaction boundary for this operation."

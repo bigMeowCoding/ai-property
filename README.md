@@ -20,12 +20,20 @@
 - [`busy-ui`](skills/busy-ui/)：提供 `@busy-fe/ui` v7 管理端组件选型、API、迁移与页面模式指南。
 - [`code-craft-and-refactoring`](skills/code-craft-and-refactoring/)：以证据驱动编码、重构、评审、性能与安全优化，并与前端架构工作双向路由。
 - [`codex-troubleshooter`](skills/codex-troubleshooter/)：诊断并修复 Codex Desktop、CLI、Skill、Plugin、MCP、网络与配置问题。
+- [`devloop-api-contract`](skills/devloop-api-contract/)：维护 DevLoop 前后端 REST、SSE、状态枚举和导出契约。
+- [`flyway-migrations`](skills/flyway-migrations/)：指导 Spring Boot 3 与 MySQL 8 的 Flyway 迁移、约束和演进验证。
 - [`frontend-architect`](skills/frontend-architect/)：面向复杂前端系统的架构设计、审计、技术选型和渐进式演进。
 - [`frontend-design`](skills/frontend-design/)：创建具有明确视觉方向和生产质量的前端界面。
 - [`human-ui`](skills/human-ui/)：审查界面的人性化设计、可访问性、交互质感和设计偏好。
 - [`init-ai-agent-project`](skills/init-ai-agent-project/)：按 React、Vue、微信小程序等技术栈与管理端、移动端、API 服务等项目形态，生成专属 `.ai/` 规则、项目宪法和可验收规格。
 - [`integrate-busy-arms-rum`](skills/integrate-busy-arms-rum/)：为团队 H5/Web 项目接入、迁移并排查 `@busy-fe/monitor-web` 与阿里云 ARMS RUM。
 - [`internet-product-manager`](skills/internet-product-manager/)：基于知识库方法论完成产品机会、需求、验证与优先级决策。
+- [`layered-architecture`](skills/layered-architecture/)：约束 Spring Boot 的协议、应用、领域和基础设施分层。
+- [`openai-compatible-streaming`](skills/openai-compatible-streaming/)：指导 OpenAI 兼容模型的流式、取消、重试、持久化与脱敏。
+- [`rest-api-conventions`](skills/rest-api-conventions/)：统一 Spring REST DTO、校验、状态码和异常响应契约。
+- [`spring-data-jpa`](skills/spring-data-jpa/)：指导 Spring Data JPA 建模、查询、项目隔离和性能验证。
+- [`testing-pyramid`](skills/testing-pyramid/)：按风险设计 Spring 单元、切片、集成、并发和端到端测试。
+- [`transactional-patterns`](skills/transactional-patterns/)：指导 Spring 事务边界、回滚、并发保护和故障安全。
 - [`vercel-react-best-practices`](skills/vercel-react-best-practices/)：提供 Vercel React 与 Next.js 性能优化规则。
 - [`vue-best-practices`](skills/vue-best-practices/)：提供 Vue 3 Composition API、SFC、响应式与组件设计实践。
 - [`vue-debug-guides`](skills/vue-debug-guides/)：诊断 Vue 3 运行时、异步、响应式与 SSR/Hydration 问题。

@@ -1,0 +1,4 @@
+interface:
+  display_name: "DevLoop API 契约"
+  short_description: "维护 DevLoop 前后端 REST、SSE、状态和导出契约"
+  default_prompt: "Use $devloop-api-contract to align this server change with the DevLoop web client."

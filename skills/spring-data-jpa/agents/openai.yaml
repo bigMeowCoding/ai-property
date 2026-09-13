@@ -1,0 +1,4 @@
+interface:
+  display_name: "Spring Data JPA"
+  short_description: "指导 Spring Data JPA 建模、查询、隔离约束和性能治理"
+  default_prompt: "Use $spring-data-jpa to implement this persistence change safely."

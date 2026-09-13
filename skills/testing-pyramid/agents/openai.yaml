@@ -1,0 +1,4 @@
+interface:
+  display_name: "Spring 测试策略"
+  short_description: "按业务风险设计 Spring 单元、切片、集成和端到端测试"
+  default_prompt: "Use $testing-pyramid to build a risk-driven test tree for this Spring Boot change."

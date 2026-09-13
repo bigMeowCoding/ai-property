@@ -1,0 +1,4 @@
+interface:
+  display_name: "REST API 规范"
+  short_description: "统一 Spring REST DTO、输入校验、状态码和异常响应契约"
+  default_prompt: "Use $rest-api-conventions to implement this endpoint against the existing API contract."

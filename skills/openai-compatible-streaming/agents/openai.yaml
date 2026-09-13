@@ -1,0 +1,4 @@
+interface:
+  display_name: "兼容模型流式调用"
+  short_description: "实现 OpenAI 兼容流式调用、取消、重试、故障安全和脱敏"
+  default_prompt: "Use $openai-compatible-streaming to implement this model streaming flow safely."

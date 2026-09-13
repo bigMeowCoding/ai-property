@@ -1,0 +1,4 @@
+interface:
+  display_name: "Flyway 迁移"
+  short_description: "设计可验证、可演进的 MySQL Flyway 迁移"
+  default_prompt: "Use $flyway-migrations to create and verify this database migration."
