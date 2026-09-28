@@ -30,6 +30,7 @@
 - [`internet-product-manager`](skills/internet-product-manager/)：基于知识库方法论完成产品机会、需求、验证与优先级决策。
 - [`layered-architecture`](skills/layered-architecture/)：约束 Spring Boot 的协议、应用、领域和基础设施分层。
 - [`openai-compatible-streaming`](skills/openai-compatible-streaming/)：指导 OpenAI 兼容模型的流式、取消、重试、持久化与脱敏。
+- [`operation-app-h5-local-dev`](skills/operation-app-h5-local-dev/)：沉淀运营 App 内嵌 H5 的浏览器本地开发模式（dev:mock / dev:real / dev:realTest 多模式、已登记接口返数据未登记业务前缀本地 501 失败的 Mock 语义、以 busyming-operation-app-h5-login 登录框为主通道的真实联调、localDebug 可选辅助身份快照、权限来源三级收敛与按钮权限消费、安全边界；按 hr-h5 实测回写口径）。
 - [`rest-api-conventions`](skills/rest-api-conventions/)：统一 Spring REST DTO、校验、状态码和异常响应契约。
 - [`spring-data-jpa`](skills/spring-data-jpa/)：指导 Spring Data JPA 建模、查询、项目隔离和性能验证。
 - [`testing-pyramid`](skills/testing-pyramid/)：按风险设计 Spring 单元、切片、集成、并发和端到端测试。
@@ -42,6 +43,7 @@
 - [`vue-pinia-best-practices`](skills/vue-pinia-best-practices/)：提供 Pinia Store、状态管理与响应式实践。
 - [`vue-router-best-practices`](skills/vue-router-best-practices/)：提供 Vue Router 4 导航守卫、参数与生命周期实践。
 - [`vue-testing-best-practices`](skills/vue-testing-best-practices/)：提供 Vitest、Vue Test Utils 与 Playwright 测试实践。
+- [`write-natural-docs`](skills/write-natural-docs/)：撰写和改写自然、具体、克制的中文工作文档，并保留事实与原意。
 - [`developer`](agents/developer.toml)：统一承担功能开发、缺陷修复和已确认审查意见返修，并按任务切换执行边界。
 - [`code_reviewer`](agents/code-reviewer.toml)：只读的独立审查 Agent，覆盖通用代码与 Vue 管理端专项审查。
 

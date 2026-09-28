@@ -1,0 +1,13 @@
+interface:
+  display_name: 自然文档写作
+  short_description: 撰写和改写自然、具体、克制，减少模板套话的中文工作文档
+  default_prompt: 使用 $write-natural-docs 把这份文档改得自然、具体、专业，并保留原意。
+  icon_small: assets/icon.svg
+  icon_large: assets/icon.svg
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true
