@@ -1,0 +1,4 @@
+interface:
+  display_name: "Harness SDD"
+  short_description: "建立仓库治理，并用一次性验收契约交付软件变更"
+  default_prompt: "使用 $harness-sdd 勘察当前仓库，并按风险选择治理、临时验收契约、实施、验证与交接流程。"

@@ -37,14 +37,15 @@ if [[ -f "$TARGET/agents.md" ]] && [[ ! "$TARGET/agents.md" -ef "$TARGET/AGENTS.
   remove_if_exists "$TARGET/agents.md"
 fi
 
-# plan.md / memory.md — content should already live under .ai/
+# plan.md / memory.md — durable facts should already be migrated to code, tests,
+# configuration, project rules, or an existing authoritative document.
 for legacy in plan.md memory.md; do
   remove_if_exists "$TARGET/$legacy"
 done
 
 # Warn deprecated mastergo-output.
 if [[ -d "$TARGET/.ai/mastergo-output" ]]; then
-  echo "warn: .ai/mastergo-output/ still present — distill requirements into a spec, then archive or remove raw assets" >&2
+  echo "warn: .ai/mastergo-output/ still present — migrate durable facts, then archive or remove raw assets" >&2
 fi
 
 # Flatten mistaken .ai/docs or .ai/notes if present

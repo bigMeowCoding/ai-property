@@ -1,57 +1,96 @@
 ---
 name: harness-sdd
-description: Verification-driven development skill for coding agents. Use for feature implementation, bug fixes, refactoring, migrations and cross-module changes; applies temporary specifications, risk-based reviews, deterministic checks, bounded repair loops, and safe cleanup.
+description: Establish or calibrate repository AI governance, and deliver software changes through temporary verification-driven task specifications. Use when initializing `.ai/` rules and project profiles, migrating legacy workflow documents, or implementing features, fixes, refactors, migrations, and cross-module changes with risk-based planning, deterministic checks, bounded repair, review, and safe cleanup.
 metadata:
-  version: 2.0.0
+  version: 3.1.0
 ---
 
-# Harness SDD 2.0
+# Harness SDD
 
-You are an engineering delivery agent, not a document generator. Prefer the smallest workflow that proves the requested change is correct.
+Use the smallest evidence-backed workflow that fits the request. This skill has two related modes: persistent repository governance and task-scoped software delivery.
 
-## Non-negotiable principles
+## Route the request
 
-1. **Code and tests are the source of truth for current behavior.** Existing documents may be stale. Do not treat a historical Spec as authoritative over observed implementation.
-2. **Judge first.** Define observable acceptance criteria and how to verify them before editing code. Missing verification is `unverified`, never `passed`.
-3. **Disposable Spec.** Create at most one temporary `spec.md` for the current task. For trivial fixes, a concise in-conversation acceptance contract is sufficient. No permanent `plan.md`, `tasks.md`, `findings.md`, or `review.md`.
-4. **Context on demand.** Read project instructions, current task and relevant code; do not recursively load irrelevant documents. Describe only top-level architecture in AGENTS.md.
-5. **Small changes + bounded feedback loop.** Implement a focused batch, verify, diagnose, repair. If the same root cause persists after 3 attempts, or 2 iterations produce no evidence of progress, stop and report blockers.
-6. **Evidence over claims.** Never call a requirement done merely because the agent says so. Record executed command, exit code, code revision/worktree fingerprint, and unverified conditions.
-7. **Independent review for high risk.** Use a separate fresh-context reviewer if available; if not, perform a clearly marked non-independent review and disclose limitation.
-8. **Rules are curated, not accumulated.** Prefer executable tests, types and lint rules. Suggest persistent documentation updates only for durable, reusable constraints and require approval before changing global instructions.
-9. **Safety and developer control.** Do not deploy, merge, push, delete user files, weaken tests, rewrite project policies or silently alter scope. Do not delete active specs before delivery/acceptance confirmation.
+| Request | Mode | Persistent output |
+| --- | --- | --- |
+| Initialize or standardize an AI-assisted repository, create `.ai/` governance, select stack/product profiles, or migrate legacy Agent documents | **Repository governance** | `AGENTS.md`, `.ai/AGENTS.md`, and `.ai/CONSTITUTION.md` |
+| Implement, fix, refactor, migrate, or review code in an already usable repository | **Task delivery** | Code/tests; any task Spec is temporary |
+| Standardize a repository and implement a change | **Combined** | Establish the governance baseline first, then run task delivery against a real requirement |
 
-## Routing (choose the cheapest safe mode)
+For repository governance, read [project workflow](references/project-workflow.md). Read [profile selection](references/profile-selection.md) when choosing or extending stack and project-type profiles. Do not create example requirements as project facts.
 
-- **Fast**: local, reversible bug fix with clear acceptance and low blast radius; no on-disk Spec by default.
-- **Standard**: feature or multi-file change; one temporary Spec with goal, scope, design, acceptance and risks.
-- **Advanced**: authentication, authorization, money/data integrity, shared libraries, cross-runtime/WebView, deployments, migrations, uncertain dependencies; require design checkpoint, focused pilot when useful, independent review and wider regression checks.
-- Small diff size does NOT imply low risk. User may override upward; do not downgrade explicitly requested safeguards.
+For task delivery, use the workflow below and load only the referenced guidance needed for the current step.
 
-## Workflow
+## Shared principles
+
+1. **Observed behavior and intended behavior are distinct.** Code and tests are the source of truth for current behavior. The current user request and acceptance contract define intended behavior; stale documents do not override observation.
+2. **Judge first.** Define observable acceptance criteria and verification before editing. Missing evidence is `unverified`, never `passed`.
+3. **Specs are temporary.** Delivery uses at most one `.sdd/work/<task-id>/spec.md`, and Fast work may keep the acceptance contract in conversation. Do not create long-lived `.ai/specs`, parallel plans, findings, or review documents.
+4. **Context on demand.** Read applicable project instructions and relevant code, tests, callers, and dependency paths. Do not recursively load unrelated documentation.
+5. **Small changes and bounded feedback.** Implement a focused increment, verify, diagnose, and repair. Stop after 3 attempts on the same root cause or 2 iterations without measurable progress.
+6. **Evidence over claims.** Record executed checks, exit codes, revision/worktree fingerprint, acceptance evidence, and unverified conditions.
+7. **Risk controls follow impact.** High-risk changes require a design checkpoint, wider regression checks, and independent fresh-context review when available.
+8. **Curate persistent rules.** Prefer tests, types, lint rules, and concise reusable guidance. Change repository governance only when requested or explicitly approved; do not accumulate task history in global instructions.
+9. **Protect developer control.** Do not deploy, merge, push, weaken tests, overwrite user work, or delete project files without scope and authorization. Cleanup may remove only known owned temporary files, or explicitly approved legacy documents after their content is migrated.
+
+## Task delivery modes
+
+- **Fast**: local, reversible, low-risk fix with clear acceptance. Keep the contract in conversation unless the task grows.
+- **Standard**: feature or multi-file change. Use one temporary task Spec containing goal, scope, design/contracts, acceptance, risks, and execution state.
+- **Advanced**: authentication, authorization, money/data integrity, shared libraries, cross-runtime/WebView, deployment, migration, or uncertain dependency work. Require a design checkpoint, focused pilot when useful, independent review, and wider regression checks.
+
+Small diff size does not imply low risk. Honor a user-requested higher safeguard level.
+
+## Task delivery workflow
 
 ### 1. Explore
-Read `AGENTS.md` if present, discover stack and available checks using `node <skill-dir>/scripts/detect-project.mjs --project <repo>`, inspect Git status without changing it, then inspect *relevant* entrypoints, types, tests and dependency paths. Map only major directories; avoid a full file inventory. Read [exploration](references/exploration.md) as needed.
 
-### 2. Specify / Judge First
-For Standard/Advanced tasks create `.sdd/work/<task-id>/spec.md` from [template](assets/spec-template.md). Keep the work directory untracked (recommend `.git/info/exclude` or user-approved `.gitignore`; never silently edit ignores). Write observable `AC-#`, matching verification method and any manual-only checks. Mark unknowns explicitly. For Advanced mode, present architecture and risks for approval before broad implementation. Read [specification](references/specification.md).
+Read applicable `AGENTS.md`, inspect Git status without changing it, and discover available checks with:
+
+```bash
+node <skill-dir>/scripts/detect-project.mjs --project <repo>
+```
+
+Inspect relevant entrypoints, types, tests, callers, and dependency paths. Treat pre-existing changes as user-owned. Read [exploration](references/exploration.md) as needed.
+
+### 2. Specify
+
+For Standard or Advanced work, create `.sdd/work/<task-id>/spec.md` from [the task template](assets/spec-template.md). Keep it untracked using `.git/info/exclude`, or edit `.gitignore` only with approval. Give each `AC-#` an observable outcome and a verification method; mark manual-only and unknown items. Read [specification](references/specification.md).
+
+If the repository already contains requirement documents, use them as inputs without creating or maintaining a parallel `.ai/specs` archive. Keep the temporary task Spec limited to execution state, acceptance mapping, and evidence.
 
 ### 3. Execute
-Break work into small independently verifiable increments; maintain progress as a short task summary in the existing spec or tool state, not another Markdown file. Do not expand scope silently. Read [execution](references/execution.md).
 
-### 4. Judge + bounded repair
-Run only confirmed existing project checks, with `node <skill-dir>/scripts/verify.mjs --project <repo> --checks lint,typecheck,test,build --output <task-dir>/verification.json` or an explicit reviewed config. Re-run relevant checks after changes. Errors are findings; classify and fix root causes. Treat missing scripts as `unavailable`. Never turn a failure into success by skipping assertions. Read [verification](references/verification.md).
+Work in small independently verifiable increments, preserve unrelated edits, and do not expand scope silently. Keep progress in the existing task Spec or tool state, not another Markdown file. Read [execution](references/execution.md).
 
-### 5. Review / convergence
-Check each `AC-#` against observed evidence. Review changed code for regressions, exception handling, security and unintended file changes. Escalate blockers/manual tests. High-risk tasks need separate-context review when host supports it. Read [review](references/review.md).
+### 4. Verify and repair
 
-### 6. Finish / knowledge distillation / cleanup
-Report changed files, AC evidence, checks passed/failed/unavailable, manual follow-up and remaining risks. Propose durable learnings categorized as code/test/lint, project architecture/rule, cross-project skill, or discard. No automatic persistent rule edits. Only after **explicit delivery confirmation**, successful applicable checks and no open required acceptance items, clean *owned* temporary task files via `cleanup.mjs`; this does not replace PR/CI evidence. Read [distillation](references/distillation.md).
+Run only reviewed project checks. The deterministic helper can record evidence:
 
-## Invoking scripts
+```bash
+node <skill-dir>/scripts/verify.mjs --project <repo> --checks lint,typecheck,test,build --output <task-dir>/verification.json
+```
 
-Scripts are standard Node.js ESM and use only built-in modules. Run `node <skill-dir>/scripts/<name>.mjs --help`. All paths are resolved relative to the caller's project, not the Skill directory. The Skill itself is portable; project tooling need not be installed by this Skill.
+Treat absent scripts as `unavailable`. Never manufacture success by skipping assertions or weakening tests. Re-run affected checks after implementation, test, verifier, or configuration changes. Read [verification](references/verification.md).
+
+### 5. Review and converge
+
+Map every `AC-#` to observed evidence, inspect the final diff for regressions, failure paths, security, compatibility, and unintended changes, and disclose manual or unavailable checks. Advanced work needs an independent reviewer when supported; otherwise label the review non-independent. Read [review](references/review.md).
+
+### 6. Handoff, distill, and clean up
+
+Report changed files, acceptance evidence, checks passed/failed/unavailable, manual follow-up, and remaining risks. Distill durable lessons to code/tests/lint first, then propose focused governance updates when warranted. After explicit delivery confirmation and successful applicable checks, clean only owned temporary files with `cleanup.mjs`. Read [distillation](references/distillation.md).
+
+## Helper scripts
+
+All task-delivery `.mjs` scripts use built-in Node.js modules. Run `node <skill-dir>/scripts/<name>.mjs --help` before use.
+
+Repository-governance helpers are documented in [project workflow](references/project-workflow.md). Their stable entry point is:
+
+```bash
+bash <skill-dir>/scripts/init.sh /path/to/repo
+```
 
 ## Stop conditions
 
-Pause and report instead of inventing a pass if no runnable checks exist, necessary credentials/devices are missing, current implementation contradicts critical requirements, high-risk approval is outstanding, or evidence is stale after further changes.
+Stop and report instead of inventing a pass when required evidence cannot run, credentials or devices are missing, observed behavior contradicts a critical requirement, a required high-risk checkpoint is unresolved, or verification became stale after further changes.

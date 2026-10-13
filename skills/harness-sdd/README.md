@@ -1,16 +1,26 @@
-# Harness SDD 2.0 — installable Agent Skill
+# Harness SDD 3.1 — installable Agent Skill
 
-A low-documentation, verification-driven workflow for Codex and Claude Code.
+A verification-driven software delivery workflow with an optional repository-governance mode.
 
 ## Install
 
-Copy the **entire `harness-sdd-2.0` directory** to an Agent Skills discovery location supported by your client (rename directory to `harness-sdd` if preferred). For example, project-local `.agents/skills/harness-sdd/` for a compatible Codex configuration. Claude Code skill discovery may use `.claude/skills/harness-sdd/`; follow the host version's current location and command conventions.
+Copy the entire `harness-sdd` directory to an Agent Skills discovery location supported by your client, such as `.agents/skills/harness-sdd/`. The installed directory must keep `SKILL.md`, `agents/`, `references/`, `assets/`, `templates/`, `scripts/`, and `tests/` together.
 
-The directory must contain `SKILL.md`, `references/`, `assets/`, and `scripts/`. Installing does **not** change your repository's root `AGENTS.md`.
+Installing the Skill alone does not modify a repository. Invoke it with a natural request such as `Use harness-sdd to initialize this repository workflow` or `Use harness-sdd to implement this feature`.
 
-Invoke through a natural request like: `Use harness-sdd to implement ...`; whether `/harness-sdd` is available depends on the client.
+## Repository governance
 
-## Local helper commands
+The initializer inspects repository evidence and composes stack and project-type profiles into `AGENTS.md` and `.ai/` governance:
+
+```bash
+bash scripts/init.sh /path/to/repo
+bash scripts/init.sh /path/to/repo --stack react --project-type admin
+bash scripts/init.sh --list-profiles
+```
+
+It preserves existing governance files by default. Review generated evidence before implementation and use `--force` only after preserving custom rules. Legacy cleanup scripts must be run only after confirming that useful content has been migrated.
+
+## Task delivery helpers
 
 ```bash
 node scripts/detect-project.mjs --project /path/to/repo
@@ -18,21 +28,19 @@ node scripts/verify.mjs --project /path/to/repo --checks lint,typecheck,test,bui
 node scripts/cleanup.mjs --project /path/to/repo --task TASK-001 --confirm-delivered --evidence /path/to/repo/.sdd/work/TASK-001/delivery.json
 ```
 
-**Do not execute unknown package scripts blindly**. Review them first. `verify.mjs` does not install dependencies and does not run absent scripts. `cleanup.mjs` will refuse without a valid delivery manifest, confirmed delivery, required AC completion, current-worktree evidence, and an owned-file list. See `scripts/cleanup.mjs --help`.
+Review package scripts before executing them. `verify.mjs` does not install dependencies or run absent scripts. `cleanup.mjs` refuses cleanup without delivery confirmation, completed required acceptance, current-worktree evidence, no blockers, and an explicit owned-file list.
 
-## Task worktree
-
-Create `.sdd/work/TASK-ID/spec.md` from `assets/spec-template.md` for Standard/Advanced tasks. Use `.git/info/exclude` for local ignore or an approved `.gitignore` change. All temp files remain local until delivery; for collaborative workflows, hand over the task spec through an Issue or PR before relying on cleanup.
+For Standard or Advanced work, create `.sdd/work/TASK-ID/spec.md` from `assets/spec-template.md`. Keep temporary task files local with `.git/info/exclude`, or change `.gitignore` only with approval. Do not create a long-lived `.ai/specs/` archive; remove owned temporary task files after confirmed delivery.
 
 ## Run tests
 
 ```bash
 node --test tests/*.test.mjs
+python3 scripts/test_apply_workflow.py
 ```
 
 ## Limitations
 
-- A Skill cannot ensure actual independent subagents exist; report when review is not independent.
-- `verify.mjs` evaluates available engineering checks, not business ACs or physical-device scenarios.
-- `cleanup.mjs` deliberately does not delete the whole task directory or files that are not explicitly owned.
-- No automatic global-rule edits, merge, push, deployment, or destructive Git operations.
+- Independent review depends on host support; disclose when review is not independent.
+- Automated checks do not prove business flows or physical-device scenarios by themselves.
+- No automatic merge, push, deployment, global-rule rewrite, or destructive Git operation.

@@ -25,7 +25,7 @@
 - [`frontend-architect`](skills/frontend-architect/)：面向复杂前端系统的架构设计、审计、技术选型和渐进式演进。
 - [`frontend-design`](skills/frontend-design/)：创建具有明确视觉方向和生产质量的前端界面。
 - [`human-ui`](skills/human-ui/)：审查界面的人性化设计、可访问性、交互质感和设计偏好。
-- [`init-ai-agent-project`](skills/init-ai-agent-project/)：按 React、Vue、微信小程序等技术栈与管理端、移动端、API 服务等项目形态，生成专属 `.ai/` 规则、项目宪法和可验收规格。
+- [`harness-sdd`](skills/harness-sdd/)：建立或校准仓库 AI 治理，并以一次性验收契约完成实施、验证、审查与交接。
 - [`integrate-busy-arms-rum`](skills/integrate-busy-arms-rum/)：为团队 H5/Web 项目接入、迁移并排查 `@busy-fe/monitor-web` 与阿里云 ARMS RUM。
 - [`internet-product-manager`](skills/internet-product-manager/)：基于知识库方法论完成产品机会、需求、验证与优先级决策。
 - [`layered-architecture`](skills/layered-architecture/)：约束 Spring Boot 的协议、应用、领域和基础设施分层。

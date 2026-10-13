@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
-"""Generate profile-aware AI project rules using only the Python standard library."""
+"""Establish a profile-aware AI project workflow using the Python standard library."""
 
 from __future__ import annotations
 
 import argparse
 import json
 import re
-import shutil
 import sys
 from datetime import date
 from pathlib import Path
@@ -20,7 +19,7 @@ PROJECT_TYPES = ("generic", "admin", "mobile", "consumer-web", "api-service", "l
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Initialize .ai/ with rules composed for the repository stack and project type."
+        description="Establish .ai/ workflow rules for the repository stack and project type."
     )
     parser.add_argument("target", nargs="?", default=".", help="target repository")
     parser.add_argument("--stack", choices=("auto", *STACKS), default="auto")
@@ -249,15 +248,6 @@ def write_file(path: Path, content: str, force: bool = False) -> None:
     print(f"{'updated' if existed else 'created'}: {path}")
 
 
-def copy_file(source: Path, destination: Path) -> None:
-    if destination.exists():
-        print(f"skip (exists): {destination}")
-        return
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copyfile(source, destination)
-    print(f"created: {destination}")
-
-
 def main() -> int:
     args = parse_args()
     if args.list_profiles:
@@ -321,13 +311,9 @@ def main() -> int:
     write_file(target / "AGENTS.md", render(TEMPLATES / "root-AGENTS.md", values))
     write_file(ai_dir / "AGENTS.md", agents, force=args.force)
     write_file(ai_dir / "CONSTITUTION.md", constitution, force=args.force)
-    copy_file(TEMPLATES / "specs-README.md", ai_dir / "specs" / "README.md")
-    example = ai_dir / "specs" / f"{date.today().isoformat()}-example-feature.spec.md"
-    copy_file(TEMPLATES / "spec.example.md", example)
-
     print()
     print(f"profiles: stack={stack}, project-type={project_type}")
-    print("Review the evidence and generated rules before implementation begins.")
+    print("Review the evidence and generated workflow before implementation begins.")
     print("Use --stack/--project-type for corrections; use --force only after preserving custom rules.")
     return 0
 

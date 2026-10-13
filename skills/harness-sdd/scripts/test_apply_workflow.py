@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Integration tests for profile detection and document composition."""
+"""Integration tests for AI workflow profile detection and composition."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ import unittest
 from pathlib import Path
 
 
-SCRIPT = Path(__file__).with_name("init_project.py")
+SCRIPT = Path(__file__).with_name("apply_workflow.py")
 CLEANUP_SCRIPT = Path(__file__).with_name("cleanup-legacy-docs.sh")
 STACKS = ("generic", "react", "vue", "wechat-miniprogram", "node", "python")
 PROJECT_TYPES = (
@@ -24,7 +24,7 @@ PROJECT_TYPES = (
 )
 
 
-class InitProjectTests(unittest.TestCase):
+class ApplyWorkflowTests(unittest.TestCase):
     def run_init(self, target: Path, *args: str, succeeds: bool = True) -> subprocess.CompletedProcess[str]:
         result = subprocess.run(
             [sys.executable, str(SCRIPT), str(target), *args],
@@ -46,8 +46,13 @@ class InitProjectTests(unittest.TestCase):
         constitution = (target / ".ai" / "CONSTITUTION.md").read_text(encoding="utf-8")
         self.assertIn(f"技术栈：`{stack}`", agents)
         self.assertIn(f"项目形态：`{project_type}`", agents)
+        self.assertIn("## 标准 AI 交付循环", agents)
         self.assertNotIn("UI-SPEC", agents + constitution)
         self.assertFalse((target / ".ai" / "UI-SPEC.md").exists())
+        self.assertFalse(
+            (target / ".ai" / "specs").exists(),
+            "initialization must not create a persistent specs directory",
+        )
 
     def test_react_admin_auto_detection(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -74,11 +79,6 @@ class InitProjectTests(unittest.TestCase):
             )
             self.assertIn("渲染纯度", constitution)
             self.assertIn("授权在服务端成立", constitution)
-            spec = next((target / ".ai" / "specs").glob("*.spec.md"))
-            spec_text = spec.read_text(encoding="utf-8")
-            self.assertNotIn("sdd-spec-writer", spec_text)
-            self.assertIn("## 8. 测试矩阵", spec_text)
-            self.assertIn("## 11. 发布与回滚", spec_text)
 
     def test_vue_mobile_explicit_shape(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -201,7 +201,6 @@ class InitProjectTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertTrue(ui_spec.is_file())
             self.assertTrue((target / "AGENTS.md").is_file())
-
 
 if __name__ == "__main__":
     unittest.main()
